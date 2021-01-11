@@ -50,7 +50,7 @@ $ ./postfix-ratelimiter -dbdriver=postgres -dbdsn "postgres://localhost?sslmode=
 
 ## Containerized deployment
 
-Configuration arguments are parsed using [flag](github.com/namsral/flag), so they can be specified using capitalized environment variables too. For example, you can start the app as:
+Configuration arguments are parsed using [flag](//github.com/namsral/flag), so they can be specified using capitalized environment variables too. For example, you can start the app as:
 
 ```shell
 $ docker run -d --restart=always -p 10028:10028 -e DEFAULT_RATE=2 -e DEFAULT_BURST=100 ghcr.io/rkojedzinszky/postfix-ratelimiter
