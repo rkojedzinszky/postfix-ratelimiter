@@ -1,0 +1,25 @@
+kind: pipeline
+name: build
+
+platform:
+  os: linux
+
+steps:
+- name: build
+  image: golang:1.15-alpine
+  commands:
+  - CGO_ENABLED=0 go build .
+  - apk --no-cache add binutils
+  - strip -s postfix-ratelimiter
+
+- name: docker
+  image: plugins/docker:19
+  settings:
+    repo: ghcr.io/rkojedzinszky/postfix-ratelimiter
+    registry: ghcr.io
+    username: rkojedzinszky
+    password:
+      from_secret: ghcr.io.password
+    auto_tag: true
+    mirror:
+      from_secret: hub_docker_mirror
