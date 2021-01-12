@@ -2,7 +2,20 @@
 
 A simple policy daemon which rate-limits sending mails based on sasl_username. Recipient count is rate-limited.
 
-## Usage
+## Quick deployment in Kubernetes
+
+Check out [examples](deploy/kubernetes).
+
+## Postfix configuration
+
+A sample postfix configuration might look like:
+```
+smtpd_data_restrictions = ...
+    check_policy_service { inet:postfix-ratelimiter:10028, { default_action=dunno } },
+    permit
+```
+
+## Legacy/standalone usage
 
 ```shell
 $ ./postfix-ratelimiter -h
@@ -11,18 +24,24 @@ Usage of ./postfix-ratelimiter:
   -dbdsn="": Database DSN for dynamic rate/burst lookup
   -default-burst=60: Default burst for policing
   -default-rate=1: Default rate for policing (recipient/seconds)
-  -querystring="": SQL Query returning dynamic (rate, burst) settings for a (local_part, domain) pair
+  -policy-listen-address=":10028": Postfix Policy listen address
+  -querystring="": SQL Query returning dynamic (rate, burst) settings for a (local_part, domain) lookup
+  -web-listen-address=":9026": Exporter WEB listen address
 ```
 
 The policy daemon will create a token-bucket rate-limiter for each sasl authenticated user. Rate-limits against unauthenticated mails are not enforced. The token-buckets will have `default-rate` rate and `default-burst` burst settings.
 
-The daemon listens on `:10028`.
+By default the daemon listens on `:10028` for policy requests.
 
-A sample postfix configuration might look like:
-```
-smtpd_data_restrictions = ...
-    check_policy_service { inet:127.0.0.1:10028, { default_action=dunno } },
-    permit
+## Statistics
+
+Rejected recipient count is export in Prometheus format:
+
+```shell
+$ curl -s http://127.0.0.1:9026/metrics | grep postfix_ratelimiter_rejects
+# HELP postfix_ratelimiter_rejects Rejected recipient count
+# TYPE postfix_ratelimiter_rejects counter
+postfix_ratelimiter_rejects{sasl_username="user@doma.in"} 8
 ```
 
 ## Dynamic rate/burst
@@ -55,3 +74,4 @@ Configuration arguments are parsed using [flag](//github.com/namsral/flag), so t
 ```shell
 $ docker run -d --restart=always -p 10028:10028 -e DEFAULT_RATE=2 -e DEFAULT_BURST=100 ghcr.io/rkojedzinszky/postfix-ratelimiter
 ```
+

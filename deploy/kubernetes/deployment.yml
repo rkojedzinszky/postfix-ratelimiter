@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: postfix-ratelimiter
+  name: postfix-ratelimiter
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: postfix-ratelimiter
+  template:
+    metadata:
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9028"
+      labels:
+        app: postfix-ratelimiter
+    spec:
+      containers:
+      - image: ghcr.io/rkojedzinszky/postfix-ratelimiter
+        imagePullPolicy: Always
+        name: postfix-ratelimiter
+        ports:
+        - containerPort: 10028
+          name: policyd
+        - containerPort: 9028
+          name: http
+      securityContext:
+        runAsNonRoot: true

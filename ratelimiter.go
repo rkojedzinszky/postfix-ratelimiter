@@ -11,9 +11,23 @@ import (
 
 	_ "github.com/go-sql-driver/mysql"
 	_ "github.com/lib/pq"
+	"github.com/prometheus/client_golang/prometheus"
 
 	"github.com/rkojedzinszky/postfix-sasl-exporter/server"
 )
+
+var (
+	rejected = prometheus.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "postfix",
+		Subsystem: "ratelimiter",
+		Name:      "rejects",
+		Help:      "Rejected recipient count",
+	}, []string{"sasl_username"})
+)
+
+func init() {
+	prometheus.MustRegister(rejected)
+}
 
 type ratelimiter struct {
 	defaultrate  float64
@@ -30,8 +44,10 @@ func (r *ratelimiter) Handle(req *server.Request) string {
 		return server.DUNNO
 	}
 
+	saslusername := strings.ToLower(req.SaslUsername)
+
 	var user, domain string
-	splitted := strings.SplitN(strings.ToLower(req.SaslUsername), "@", 2)
+	splitted := strings.SplitN(saslusername, "@", 2)
 	user = splitted[0]
 	if len(splitted) > 1 {
 		domain = splitted[1]
@@ -70,6 +86,8 @@ func (r *ratelimiter) Handle(req *server.Request) string {
 	}
 
 	if !t.get(rate, burst, recipientCount) {
+		rejected.WithLabelValues(saslusername).Add(recipientCount)
+
 		return server.REJECT + " Rate-limit exceeded"
 	}
 

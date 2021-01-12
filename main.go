@@ -5,8 +5,14 @@ import (
 	"database/sql"
 	"log"
 	"net"
+	"net/http"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 
 	"github.com/namsral/flag"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/rkojedzinszky/postfix-sasl-exporter/server"
 )
 
@@ -16,10 +22,17 @@ func main() {
 	driver := flag.String("dbdriver", "", "Database type for dynamic rate/burst lookups (mysql or postgresql)")
 	dsn := flag.String("dbdsn", "", "Database DSN for dynamic rate/burst lookup")
 	querystring := flag.String("querystring", "", "SQL Query returning dynamic (rate, burst) settings for a (local_part, domain) lookup")
+	policyListenAddress := flag.String("policy-listen-address", ":10028", "Postfix Policy listen address")
+	webListenAddress := flag.String("web-listen-address", ":9028", "Exporter WEB listen address")
 
 	flag.Parse()
 
-	lis, err := net.Listen("tcp", ":10028")
+	policyListener, err := net.Listen("tcp", *policyListenAddress)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	webListener, err := net.Listen("tcp", *webListenAddress)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -48,5 +61,38 @@ func main() {
 		users:        make(map[string]*tbf),
 	}
 
-	server.Run(context.Background(), lis, rd)
+	ctx, cancel := context.WithCancel(context.Background())
+	wg := &sync.WaitGroup{}
+
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+
+		server.Run(ctx, policyListener, rd)
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		webListen(webListener)
+	}()
+
+	sigchan := make(chan os.Signal, 1)
+	signal.Notify(sigchan, syscall.SIGTERM, syscall.SIGINT)
+	<-sigchan
+	cancel()
+	policyListener.Close()
+	webListener.Close()
+
+	wg.Wait()
+}
+
+func webListen(l net.Listener) {
+	mux := http.NewServeMux()
+
+	mux.Handle("/metrics", promhttp.Handler())
+
+	server := http.Server{Handler: mux}
+
+	server.Serve(l)
 }

@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: postfix-ratelimiter
+spec:
+  ports:
+  - name: policyd
+    port: 10028
+  selector:
+    app: postfix-ratelimiter
