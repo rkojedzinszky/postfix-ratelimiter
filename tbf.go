@@ -1,6 +1,7 @@
 package main
 
 import (
+	"log"
 	"sync"
 	"time"
 )
@@ -12,12 +13,24 @@ type tbf struct {
 }
 
 func (t *tbf) get(rate, burst, amount float64) bool {
+	now := time.Now()
+
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
 	// replenish token-bucket
-	now := time.Now()
-	t.capacity += rate * now.Sub(t.ts).Seconds()
+	diff := now.Sub(t.ts).Seconds()
+	if diff < 0 {
+		log.Printf("Time went backwards: from %+v to %+v, diff=%+v", t.ts, now, diff)
+	}
+
+	t.capacity += rate * diff
+
+	// Fixup for negative capacity
+	if t.capacity < 0 {
+		t.capacity = 0
+	}
+
 	if t.capacity > burst {
 		t.capacity = burst
 	}
