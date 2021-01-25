@@ -19,16 +19,11 @@ func (t *tbf) get(rate, burst, amount float64) bool {
 	defer t.mu.Unlock()
 
 	// replenish token-bucket
-	diff := now.Sub(t.ts).Seconds()
-	if diff < 0 {
-		log.Printf("Time went backwards: from %+v to %+v, diff=%+v", t.ts, now, diff)
-	}
-
-	t.capacity += rate * diff
-
-	// Fixup for negative capacity
-	if t.capacity < 0 {
-		t.capacity = 0
+	diff := float64(now.Sub(t.ts).Nanoseconds())
+	if diff > 0 {
+		t.capacity += rate * diff / 1e9
+	} else {
+		log.Printf("Time not increasing: prev=%+v now=%+v diff=%+v ns", t.ts, now, diff)
 	}
 
 	if t.capacity > burst {
