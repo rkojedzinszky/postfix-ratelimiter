@@ -16,6 +16,8 @@ import (
 	"github.com/rkojedzinszky/postfix-sasl-exporter/server"
 )
 
+var version = "devel"
+
 func main() {
 	defaultrate := flag.Float64("default-rate", 1, "Default rate for policing (recipient/seconds)")
 	defaultburst := flag.Float64("default-burst", 60, "Default burst for policing")
@@ -60,6 +62,8 @@ func main() {
 		dynstmt:      stmt,
 		users:        make(map[string]*tbf),
 	}
+
+	log.Printf("postfix-ratelimiter version %s starting", version)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	wg := &sync.WaitGroup{}

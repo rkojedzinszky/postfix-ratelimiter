@@ -8,9 +8,9 @@ steps:
 - name: build
   image: golang:1.15-alpine3.12
   commands:
-  - CGO_ENABLED=0 go build .
-  - apk --no-cache add binutils
-  - strip -s postfix-ratelimiter
+  - apk --no-cache add make git
+  - git fetch --tags
+  - CGO_ENABLED=0 make
 
 - name: docker
   image: plugins/docker:19
