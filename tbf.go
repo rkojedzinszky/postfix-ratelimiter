@@ -24,8 +24,8 @@ func (t *tbf) get(rate, burst, amount float64) bool {
 		t.capacity = newcap
 
 		t.ts = now
-	} else {
-		log.Printf("Capacity not increasing: prev=(%+v, %+v) now=(%+v, %+v)", t.ts, t.capacity, now, newcap)
+	} else if newcap < t.capacity {
+		log.Printf("Capacity would decrease: prev=(%+v, %+v) now=(%+v, %+v), buggy monotonic clock?", t.ts, t.capacity, now, newcap)
 	}
 
 	if t.capacity > burst {
