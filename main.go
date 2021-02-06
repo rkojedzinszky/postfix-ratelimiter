@@ -21,7 +21,7 @@ var version = "devel"
 func main() {
 	defaultrate := flag.Float64("default-rate", 1, "Default rate for policing (recipient/seconds)")
 	defaultburst := flag.Float64("default-burst", 60, "Default burst for policing")
-	driver := flag.String("dbdriver", "", "Database type for dynamic rate/burst lookups (mysql or postgresql)")
+	driver := flag.String("dbdriver", "", "Database type for dynamic rate/burst lookups (mysql or postgres)")
 	dsn := flag.String("dbdsn", "", "Database DSN for dynamic rate/burst lookup")
 	querystring := flag.String("querystring", "", "SQL Query returning dynamic (rate, burst) settings for a (local_part, domain) lookup")
 	policyListenAddress := flag.String("policy-listen-address", ":10028", "Postfix Policy listen address")
