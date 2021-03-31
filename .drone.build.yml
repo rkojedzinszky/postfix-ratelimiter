@@ -6,7 +6,7 @@ platform:
 
 steps:
 - name: build
-  image: golang:1.15-alpine3.12
+  image: golang:1.16-alpine3.12
   commands:
   - apk --no-cache add make git
   - git fetch --tags

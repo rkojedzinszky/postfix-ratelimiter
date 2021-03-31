@@ -5,7 +5,7 @@ name: build-arm64
 platform: {arch: arm64, os: linux, variant: v8}
 steps:
 - commands: [apk --no-cache add make git, git fetch --tags, CGO_ENABLED=0 make]
-  image: golang:1.15-alpine3.12
+  image: golang:1.16-alpine3.12
   name: build
 - image: plugins/docker:19
   name: docker
@@ -24,7 +24,7 @@ name: build-arm
 platform: {arch: arm, os: linux, variant: v7}
 steps:
 - commands: [apk --no-cache add make git, git fetch --tags, CGO_ENABLED=0 make]
-  image: golang:1.15-alpine3.12
+  image: golang:1.16-alpine3.12
   name: build
 - image: plugins/docker:19
   name: docker
@@ -43,7 +43,7 @@ name: build-amd64
 platform: {arch: amd64, os: linux}
 steps:
 - commands: [apk --no-cache add make git, git fetch --tags, CGO_ENABLED=0 make]
-  image: golang:1.15-alpine3.12
+  image: golang:1.16-alpine3.12
   name: build
 - image: plugins/docker:19
   name: docker
