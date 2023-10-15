@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"log"
 	"math"
@@ -13,7 +14,7 @@ import (
 	_ "github.com/lib/pq"
 	"github.com/prometheus/client_golang/prometheus"
 
-	"github.com/rkojedzinszky/postfix-sasl-exporter/server"
+	"github.com/rkojedzinszky/postfix-sasl-exporter/pkg/server"
 )
 
 var (
@@ -39,7 +40,7 @@ type ratelimiter struct {
 	users map[string]*tbf
 }
 
-func (r *ratelimiter) Handle(req *server.Request) string {
+func (r *ratelimiter) Handle(ctx context.Context, req *server.Request) string {
 	if req.SaslUsername == "" {
 		return server.DUNNO
 	}
@@ -62,7 +63,7 @@ func (r *ratelimiter) Handle(req *server.Request) string {
 
 	rate, burst := r.defaultrate, r.defaultburst
 	if r.dynstmt != nil {
-		row := r.dynstmt.QueryRow(user, domain)
+		row := r.dynstmt.QueryRowContext(ctx, user, domain)
 		var dynrate, dynburst sql.NullFloat64
 
 		err := row.Scan(&dynrate, &dynburst)

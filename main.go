@@ -13,7 +13,7 @@ import (
 
 	"github.com/namsral/flag"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
-	"github.com/rkojedzinszky/postfix-sasl-exporter/server"
+	"github.com/rkojedzinszky/postfix-sasl-exporter/pkg/server"
 )
 
 var version = "devel"
